@@ -9,6 +9,7 @@
 # ----------------------------------------------------------------------
 
 unset PATH  # suggestion from H. Milz: avoid accidental use of $PATH
+set -e      # exit on any error
 
 # ------------- system commands used by this script --------------------
 
@@ -20,13 +21,18 @@ SED=/usr/bin/sed
 SORT=/usr/bin/sort
 TAIL=/usr/bin/tail
 GREP=/usr/bin/grep
+CAT=/usr/bin/cat
 
 # ------------- file locations and snapshot frequency ------------------
 
 SOURCE_DIR=/
 FREQUENCY=weekly
+ADAPTOR=/sys/class/power_supply/ADP1/online
 
 # ------------- the script itself --------------------------------------
+
+# Only run when the power adaptor is connected
+[[ $($CAT $ADAPTOR) == 0 ]] && exit
 
 # Get the current time. We will use this as the name of the backup folder
 TIME=$($DATE +%Y%m%d%H%M%S)
