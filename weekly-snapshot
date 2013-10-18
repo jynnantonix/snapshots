@@ -2,10 +2,9 @@
 #
 # @file       weekly-snapshot
 # @author     Chirantan Ekbote (chirantan.ekbote <at> gmail.com)
-# @date       2012-11-01
+# @date       2012-10-18
 # @version    0.4
-# @brief      Script to consolidate all snapshots older than 7 days
-#             into one weekly snapshot
+# @brief      Script to generate a weekly snapshot of the system using tarsnap
 #
 # ----------------------------------------------------------------------
 
@@ -13,48 +12,39 @@ unset PATH  # suggestion from H. Milz: avoid accidental use of $PATH
 
 # ------------- system commands used by this script --------------------
 
-MOUNT=/bin/mount;
+DATE=/usr/bin/date
+TARSNAP=/usr/bin/tarsnap
+COMM=/usr/bin/comm
+ECHO=/usr/bin/echo
+SED=/usr/bin/sed
+SORT=/usr/bin/sort
+TAIL=/usr/bin/tail
+GREP=/usr/bin/grep
 
-ECHO=/usr/bin/echo;
-MV=/usr/bin/mv;
-RM=/usr/bin/rm;
-SORT=/usr/bin/sort;
-FIND=/usr/bin/find;
+# ------------- file locations and snapshot frequency ------------------
 
-# ------------- file locations -----------------------------------------
-
-BACKUP_DEV=/dev/md3;
-BACKUP_DIR=/mnt/backups;
+SOURCE_DIR=/
+FREQUENCY=weekly
 
 # ------------- the script itself --------------------------------------
 
-# mount the snapshot mountpoint as read-write
-$MOUNT -o remount,rw "${BACKUP_DEV}" "${BACKUP_DIR}" ;
-if (( $? )); then
-{
-    $ECHO "snapshot: could not remount ${BACKUP_DIR} readwrite";
-    exit;
-}
-fi;
+# Get the current time. We will use this as the name of the backup folder
+TIME=$($DATE +%Y%m%d%H%M%S)
 
-# Get all the snapshots more than 7 days old
-$ECHO "Starting weekly snapshot..."
-OLD_SNAPSHOTS=(`$SORT -r <( $FIND "${BACKUP_DIR}"/daily/ -maxdepth \
-1 -mtime +7) `);
+# Get the list of daily archives
+ARCHIVES=$($TARSNAP --list-archives | $GREP $FREQUENCY | $SED \
+    "s/${FREQUENCY}-//" | $SORT)
 
-# Move the latest snapshot to the weekly directory
-$ECHO "Moving latest snapshot ${OLD_SNAPSHOTS[0]}..."
-$MV "${OLD_SNAPSHOTS[0]}" "${BACKUP_DIR}"/weekly ;
+# Get the list of archives older than 6 days
+TMPIFS=$IFS
+IFS=' '
+OLD_ARCHIVES=$($COMM -23 <($ECHO $ARCHIVES) <($ECHO $ARCHIVES | $TAIL -n 23))
+IFS=$TMPIFS
 
-# Delete all the other snapshots
-$ECHO "Deleting snapshots ${OLD_SNAPSHOT[@]:1}"
-$RM -r "${OLD_SNAPSHOTS[@]:1}" ;
+# Remove all old archives
+for a in $($ECHO $OLD_ARCHIVES); do
+    $TARSNAP -df ${FREQUENCY}-$a --quiet --no-print-stats
+done
 
-# now remount the RW snapshot mountpoint as readonly
-$MOUNT -o remount,ro "${BACKUP_DEV}" "${BACKUP_DIR}" ;
-if (( $? )); then
-{
-    $ECHO "snapshot: could not remount ${BACKUP_DIR} readonly";
-    exit;
-} fi;
-
+# Create the new archive
+$TARSNAP -cf ${FREQUENCY}-$TIME --quiet --no-print-stats $SOURCE_DIR
