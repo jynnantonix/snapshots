@@ -3,7 +3,7 @@
 # @file       daily-snapshot
 # @author     Chirantan Ekbote (chirantan.ekbote <at> gmail.com)
 # @date       2012-11-01
-# @version    0.4
+# @version    0.5
 # @brief      Script to generate a daily snapshot of the system using tarsnap
 #
 # ----------------------------------------------------------------------
@@ -25,7 +25,7 @@ CAT=/usr/bin/cat
 
 # ------------- file locations and snapshot frequency ------------------
 
-SOURCE_DIR=/
+SOURCE_DIR=/home/
 FREQUENCY=daily
 ADAPTOR=/sys/class/power_supply/ADP1/online
 

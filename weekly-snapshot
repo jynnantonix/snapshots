@@ -3,7 +3,7 @@
 # @file       weekly-snapshot
 # @author     Chirantan Ekbote (chirantan.ekbote <at> gmail.com)
 # @date       2012-10-18
-# @version    0.4
+# @version    0.5
 # @brief      Script to generate a weekly snapshot of the system using tarsnap
 #
 # ----------------------------------------------------------------------
@@ -25,7 +25,7 @@ CAT=/usr/bin/cat
 
 # ------------- file locations and snapshot frequency ------------------
 
-SOURCE_DIR=/
+SOURCE_DIR=/home/
 FREQUENCY=weekly
 ADAPTOR=/sys/class/power_supply/ADP1/online
 
@@ -41,10 +41,10 @@ TIME=$($DATE +%Y%m%d%H%M%S)
 ARCHIVES=$($TARSNAP --list-archives | $GREP $FREQUENCY | $SED \
     "s/${FREQUENCY}-//" | $SORT)
 
-# Get the list of archives older than 6 days
+# Get the list of archives older than 3 weeks
 TMPIFS=$IFS
 IFS=' '
-OLD_ARCHIVES=$($COMM -23 <($ECHO $ARCHIVES) <($ECHO $ARCHIVES | $TAIL -n 23))
+OLD_ARCHIVES=$($COMM -23 <($ECHO $ARCHIVES) <($ECHO $ARCHIVES | $TAIL -n 3))
 IFS=$TMPIFS
 
 # Remove all old archives
